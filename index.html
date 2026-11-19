@@ -2,21 +2,355 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>cashbook-bot</title>
-<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.8;color:#222}h1{font-size:1.6em}a{color:#2b5288}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>出納簿 bot 使い方マニュアル</title>
+<meta name="description" content="部の出納簿 Discord bot（cashbook-bot）の部員・会計向けの使い方">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #59636e;
+    --border: #d1d9e0;
+    --surface: #f6f8fa;
+    --accent: #0969da;
+    --accent-bg: rgba(9, 105, 218, 0.10);
+    --axis: #8c959f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #9198a1;
+      --border: #3d444d;
+      --surface: #151b23;
+      --accent: #4493f8;
+      --accent-bg: rgba(68, 147, 248, 0.15);
+      --axis: #6e7681;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.75rem; line-height: 1.3; margin: 0 0 4px; }
+  h2 { font-size: 1.35rem; line-height: 1.4; margin: 48px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+  p, ul, ol { margin: 0 0 12px; }
+  ul, ol { padding-left: 1.5em; }
+  li + li { margin-top: 4px; }
+  a { color: var(--accent); }
+  .updated { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+  nav.toc h2 { font-size: 1rem; margin: 0 0 4px; padding: 0; border: 0; }
+  nav.toc ol { margin: 0; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 4px;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+  pre code { background: none; border: 0; padding: 0; overflow-wrap: normal; }
+  .table-wrap { overflow-x: auto; margin: 0 0 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; line-height: 1.6; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--surface); white-space: nowrap; }
+  td.nowrap { white-space: nowrap; }
+  figure { margin: 16px 0; }
+  .figure-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+  .flow { display: block; width: 100%; min-width: 600px; height: auto; }
+  .flow .ink { fill: var(--fg); }
+  .flow .quiet { fill: var(--muted); }
+  .flow .box { fill: none; stroke: var(--axis); stroke-width: 1.25; }
+  .flow .box.main { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 2; }
+  .flow .line { fill: none; stroke: var(--axis); stroke-width: 1.25; }
+  .flow .arrowhead { fill: var(--axis); }
+  figcaption { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+</style>
 </head>
 <body>
-<h1>cashbook-bot</h1>
-<p>cashbook-bot は、学生団体の部内会計（部費・立替金・収入・支出）を記録・承認・集計するための内部用 Discord bot です。部員以外は利用できません。</p>
-<h2>機能</h2>
+<main>
+
+<h1>出納簿 bot 使い方マニュアル</h1>
+<p class="updated">最終更新: 2026-11-20</p>
+
+<nav class="toc" aria-label="目次">
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#start">はじめに</a></li>
+    <li><a href="#entry">収入・支出を記録する: /entry（出納）</a></li>
+    <li><a href="#advance">立て替えたお金を返してもらう: /advance（立替申請）</a></li>
+    <li><a href="#resubmit">差し戻されたとき: /resubmit（再提出）</a></li>
+    <li><a href="#dues">部費: /dues-status（部費状況）</a></li>
+    <li><a href="#accountant">会計ロールの人へ</a></li>
+    <li><a href="#faq">よくある質問・困ったとき</a></li>
+  </ol>
+</nav>
+
+<section id="start">
+<h2>はじめに</h2>
+<p>出納簿 bot は、部のお金の出入りを Discord から記録する bot です。記録は会計の人の承認を経て、Google スプレッドシートの出納簿に残ります。部員がスプレッドシートを直接さわる必要はありません。</p>
+
+<h3>最初に一度だけ: 登録する</h3>
+<ol>
+  <li>メッセージの入力欄に <code>/register</code> と打ち、候補から「登録」を選ぶ</li>
+  <li>「学籍番号」に自分の学籍番号を入れて送信する（「氏名」は省略できます）</li>
+</ol>
+<p>登録しないと、収入・支出の記録や立替の申請はできません。間違えたときは、もう一度 <code>/register</code> を実行すれば上書きされます。差し戻しの通知メールは学籍番号の学生メールに届くので、正しく入れてください。</p>
+
+<h3>コマンドの出し方</h3>
 <ul>
-<li>Discord のスラッシュコマンドによる出納の入力と承認</li>
-<li>台帳・領収書・帳票の Google ドライブ / Google スプレッドシートへの保存</li>
-<li>差し戻し時のメール通知（Gmail）</li>
+  <li>入力欄に <code>/</code> を打つと、コマンドの一覧が出ます。Discord の表示言語が日本語なら、日本語の名前（例: <code>/出納</code>）でも探せます。このマニュアルでは <code>/entry</code>（出納）のように両方を書きます。</li>
+  <li>迷ったら <code>/help</code>（ヘルプ）を実行します。自分が使えるコマンドだけが表示されます。<code>/help command:entry</code> のように指定すると、そのコマンドの入力例と注意点が出ます。</li>
+  <li><code>/help</code> などの応答は、自分にだけ見えます。</li>
 </ul>
-<h2>Google アカウントとの連携</h2>
-<p>本アプリは、団体が管理する Google アカウントの許可のもとで Google Drive・Google Sheets・Gmail の API を利用します。詳しくは<a href="./privacy.html">プライバシーポリシー</a>をご覧ください。</p>
-<p>連絡先: 団体の会計担当まで（運用開始時に団体のメールアドレスを記載）</p>
+</section>
+
+<section id="entry">
+<h2>収入・支出を記録する: <code>/entry</code>（出納）</h2>
+<p>部のお金を払ったとき・受け取ったときは、<code>/entry</code> で記録します。自分のお金で立て替えたときは、次の節の <code>/advance</code> を使います。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>入力</th><th>書くこと</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">区分</td><td class="nowrap">必須</td><td>収入か支出か</td></tr>
+    <tr><td class="nowrap">科目</td><td class="nowrap">必須</td><td>お金の分類。候補の一覧から選ぶ（例: 備品・大会参加費・部費）</td></tr>
+    <tr><td class="nowrap">金額</td><td class="nowrap">必須</td><td>円単位の整数（例: 3980）</td></tr>
+    <tr><td class="nowrap">摘要</td><td class="nowrap">必須</td><td>具体的な中身。自由に書く（例: 早押しボタン 2 個）。200 文字まで</td></tr>
+    <tr><td class="nowrap">日付</td><td class="nowrap">任意</td><td>お金が動いた日。<code>2026-11-20</code>・<code>11/20</code>・<code>今日</code>・<code>昨日</code> のどれかで入力。省略すると今日</td></tr>
+    <tr><td class="nowrap">領収書</td><td class="nowrap">原則必須</td><td>レシート・領収書の写真か PDF（JPEG / PNG / HEIC / PDF）。収入は振込通知・売上集計表など</td></tr>
+    <tr><td class="nowrap">領収書なしの理由</td><td>領収書がないとき必須</td><td>領収書を添付できない理由</td></tr>
+    <tr><td class="nowrap">資金区分</td><td class="nowrap">任意</td><td>使い道が決まっているお金（支援金など）のときだけ選ぶ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>科目と摘要の違い</h3>
+<p>科目はお金の分類で、一覧から選ぶだけです。摘要は具体的に何を買ったか・何の収入かを、自分の言葉で書きます。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>やったこと</th><th>区分</th><th>科目</th><th>摘要</th></tr></thead>
+  <tbody>
+    <tr><td>早押しボタンを買った</td><td class="nowrap">支出</td><td>備品</td><td>早押しボタン 2 個</td></tr>
+    <tr><td>問題集を買った</td><td class="nowrap">支出</td><td>書籍・問題集</td><td>問題集 3 冊</td></tr>
+    <tr><td>大会の参加費を主催者に払った</td><td class="nowrap">支出</td><td>大会参加費</td><td>○○大会 3 人分</td></tr>
+    <tr><td>大会の参加費を部員から集めた</td><td class="nowrap">収入</td><td>参加費徴収</td><td>○○大会の参加費 3 人分</td></tr>
+    <tr><td>理大祭の売上を受け取った</td><td class="nowrap">収入</td><td>理大祭収入</td><td>理大祭 1 日目の売上</td></tr>
+  </tbody>
+</table>
+</div>
+<p>合う科目がないときは「雑費」「雑収入」を選ぶか、会計に相談してください。科目の一覧は会計が管理しています。</p>
+
+<h3>入力例</h3>
+<pre><code>/entry kind:支出 category:備品 amount:3980 memo:早押しボタン 2 個 receipt:(写真)</code></pre>
+
+<h3>記録したあと</h3>
+<ul>
+  <li>送信すると「✅ 登録しました。会計チャンネルで承認を待っています。」と出て、会計チャンネルに承認依頼が投稿されます。</li>
+  <li>会計ロールの人が承認すると、承認依頼の「状態」が「✅ 承認済み」に変わります。承認されたときの個別の通知はありません。</li>
+  <li>一定額以上の記録は、別々の 2 人の承認が必要です。自分の記録を自分で承認することはできません。</li>
+  <li>差し戻されたときは、「<a href="#resubmit">差し戻されたとき</a>」の節を見てください。</li>
+  <li>未来の日付と、会計が締めた月の日付は入力できません。</li>
+</ul>
+
+<figure>
+  <div class="figure-scroll">
+  <svg class="flow" viewBox="0 0 760 288" role="img" aria-labelledby="flow-title flow-desc">
+    <title id="flow-title">承認されると出納簿に確定する</title>
+    <desc id="flow-desc">/entry で記録すると承認待ちになり、会計ロールの人が承認すると承認済みになって出納簿に確定する。非承認なら差し戻しになり、/resubmit で直して出し直すと承認待ちに戻る。</desc>
+    <defs>
+      <marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path class="arrowhead" d="M0 0L10 5L0 10z"/>
+      </marker>
+    </defs>
+    <text class="ink" x="24" y="34" font-size="15" font-weight="600">承認されると出納簿に確定する</text>
+    <g>
+      <path class="line" d="M228 104H280" marker-end="url(#flow-arrow)"/>
+      <path class="line" d="M480 104H532" marker-end="url(#flow-arrow)"/>
+      <path class="line" d="M340 132V208" marker-end="url(#flow-arrow)"/>
+      <path class="line" d="M420 208V132" marker-end="url(#flow-arrow)"/>
+    </g>
+    <g font-size="13">
+      <rect class="box" x="28" y="76" width="200" height="56" rx="8"/>
+      <text class="ink" x="128" y="100" text-anchor="middle" font-weight="600">/entry で記録</text>
+      <text class="quiet" x="128" y="120" text-anchor="middle" font-size="11.5">会計チャンネルに承認依頼</text>
+
+      <rect class="box" x="280" y="76" width="200" height="56" rx="8"/>
+      <text class="ink" x="380" y="100" text-anchor="middle" font-weight="600">承認待ち</text>
+      <text class="quiet" x="380" y="120" text-anchor="middle" font-size="11.5">会計ロールの人が確認</text>
+
+      <rect class="box main" x="532" y="76" width="200" height="56" rx="8"/>
+      <text class="ink" x="632" y="100" text-anchor="middle" font-weight="600">承認済み</text>
+      <text class="ink" x="632" y="120" text-anchor="middle" font-size="11.5">出納簿に確定</text>
+
+      <rect class="box" x="280" y="208" width="200" height="56" rx="8"/>
+      <text class="ink" x="380" y="232" text-anchor="middle" font-weight="600">差し戻し</text>
+      <text class="quiet" x="380" y="252" text-anchor="middle" font-size="11.5">メンションと学生メールで通知</text>
+
+      <text class="quiet" x="506" y="66" text-anchor="middle" font-size="11.5">承認（一定額以上は 2 人）</text>
+      <text class="quiet" x="330" y="174" text-anchor="end" font-size="11.5">非承認（理由つき）</text>
+      <text class="quiet" x="430" y="174" font-size="11.5">/resubmit で直して出し直す</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption>記録の流れ。差し戻されても、<code>/resubmit</code> で直せば承認待ちに戻ります。立替（<code>/advance</code>）も承認までは同じ流れですが、出納簿に記録されるのは会計が返還したときです。</figcaption>
+</figure>
+</section>
+
+<section id="advance">
+<h2>立て替えたお金を返してもらう: <code>/advance</code>（立替申請）</h2>
+<p>自分のお金で部のものを買ったら、<code>/advance</code> で返還を申請します。承認されたあと、会計が現金で返してくれます。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>入力</th><th>書くこと</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">科目</td><td class="nowrap">必須</td><td>お金の分類。支出の一覧から選ぶ（例: 書籍・問題集・備品）</td></tr>
+    <tr><td class="nowrap">金額</td><td class="nowrap">必須</td><td>立て替えた金額（円）</td></tr>
+    <tr><td class="nowrap">摘要</td><td class="nowrap">必須</td><td>買ったものの具体的な中身（例: 問題集 2 冊）</td></tr>
+    <tr><td class="nowrap">購入日</td><td class="nowrap">任意</td><td>買った日。省略すると今日</td></tr>
+    <tr><td class="nowrap">返還先</td><td class="nowrap">任意</td><td>お金を返す相手。省略すると自分。ほかの部員の分を代わりに申請するときに使う</td></tr>
+    <tr><td class="nowrap">領収書</td><td class="nowrap">原則必須</td><td>レシート・領収書の写真か PDF</td></tr>
+    <tr><td class="nowrap">領収書なしの理由</td><td>領収書がないとき必須</td><td>領収書を添付できない理由</td></tr>
+  </tbody>
+</table>
+</div>
+
+<pre><code>/advance category:書籍・問題集 amount:1980 memo:問題集 receipt:(レシートの写真)</code></pre>
+
+<h3>申請したあと</h3>
+<ol>
+  <li>会計チャンネルに承認依頼が投稿され、会計ロールの人が承認します。</li>
+  <li>承認されただけでは、まだお金は戻っていません。会計から現金を受け取ってください。</li>
+  <li>会計が返還を記録すると、会計チャンネルで「立替金を返還しました」とメンションされます。この時点で出納簿に支出として記録されます。</li>
+</ol>
+<p>返還は全額だけで、一部だけ返すことはできません。まだ返ってきていない立替金は、<code>/advance-status</code>（立替状況）で確かめられます（自分の分だけ表示されます）。</p>
+</section>
+
+<section id="resubmit">
+<h2>差し戻されたとき: <code>/resubmit</code>（再提出）</h2>
+<p>差し戻された記録や立替は、理由に合わせて直し、<code>/resubmit</code> で出し直します。新しく <code>/entry</code> し直す必要はありません。</p>
+
+<h3>通知の届き方</h3>
+<ul>
+  <li>会計チャンネルでメンションされます。「申請 <code>01JD...</code> が差し戻されました。理由: …」のように、ID と理由が書かれています。</li>
+  <li>同じ内容が学生メールにも届きます。</li>
+</ul>
+
+<h3>直し方</h3>
+<ol>
+  <li><code>/resubmit</code> を出し、「id」に差し戻された ID を入れる（候補に自分の差し戻されたものが出ます）</li>
+  <li>直したい項目だけを入れる（科目・金額・摘要・日付・領収書など）。入れなかった項目は元のままです</li>
+  <li>送信すると、もう一度承認待ちになります</li>
+</ol>
+<pre><code>/resubmit id:01JD... receipt:(撮り直した写真)</code></pre>
+
+<h3>再提出できないもの</h3>
+<ul>
+  <li>部費の納入や逆仕訳から自動で登録された取引。会計が元の操作をやり直します。</li>
+  <li>日付を別の年度（4 月始まり）に変える再提出。</li>
+  <li>再提出の回数や期限に上限がある場合は、超えると「再提出は○回までです」などのエラーになります。そのときは会計に相談してください。</li>
+</ul>
+</section>
+
+<section id="dues">
+<h2>部費: <code>/dues-status</code>（部費状況）</h2>
+<p>部費は会計に渡すだけでよく、部員が bot で記録することはありません。会計が受け取ったことを記録します。</p>
+<p>自分の納入状況は <code>/dues-status</code> で確かめられます。請求ごとに「未納」「納入済み」「免除」のどれかが表示され、自分の分だけが見えます。</p>
+<p>払ったのに「未納」のままのときは、会計に伝えてください。会計の記録が差し戻された場合も、「未納」に戻ります。</p>
+</section>
+
+<section id="accountant">
+<h2>会計ロールの人へ</h2>
+<p>会計ロールの人は、承認と、部費・立替・締めの記録を担当します。会計ロールの人も、最初に <code>/register</code> で登録しておいてください（<code>/dues-pay</code> と <code>/reverse</code> は登録が必要です）。</p>
+
+<h3>承認・差し戻し</h3>
+<ul>
+  <li>会計チャンネルの承認依頼にある「承認」「非承認（差し戻し）」ボタンを押します。先に押された操作で確定し、そのあとの操作は断られます。</li>
+  <li>領収書は承認依頼の「開く」から確かめます。領収書がない申請は「⚠️ 領収書なし」と理由が目立つように表示されます。</li>
+  <li>自分の申請は自分で承認できません。</li>
+  <li>一定額以上の申請は、別々の 2 人が承認した時点で承認済みになります。1 人目が押すと「あと 1 人」と表示されます。</li>
+  <li>差し戻すと理由の入力欄が開きます。理由は入力者へのメンションとメールにそのまま載るので、何を直せばよいかが分かるように書いてください。</li>
+  <li>100 時間以上承認されていない申請は、会計チャンネルに一覧が出ます。</li>
+</ul>
+
+<h3>会計のコマンド</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>こんなとき</th><th>コマンド</th><th>入力例</th></tr></thead>
+  <tbody>
+    <tr><td>運用開始時・年度の初めに残高を入れる</td><td><code>/opening-balance</code>（期首残高）</td><td><code>/opening-balance amount:52300</code></td></tr>
+    <tr><td>部費を請求する</td><td><code>/dues-set</code>（部費請求）</td><td><code>/dues-set period:2026年度前期 amount:3000 due_date:2026-05-31</code></td></tr>
+    <tr><td>部費を受け取った</td><td><code>/dues-pay</code>（部費納入）</td><td><code>/dues-pay member:@部員 dues:2026年度前期</code></td></tr>
+    <tr><td>部費を免除する</td><td><code>/dues-exempt</code>（部費免除）</td><td><code>/dues-exempt member:@部員 dues:2026年度前期 reason:休部中</code></td></tr>
+    <tr><td>立替金を返した</td><td><code>/advance-repay</code>（立替返還）</td><td><code>/advance-repay id:01JD...</code></td></tr>
+    <tr><td>承認済みの記録の誤りを直す</td><td><code>/reverse</code>（逆仕訳）</td><td><code>/reverse id:01JD... reason:金額の入力誤り</code></td></tr>
+    <tr><td>月を締めて残高を確定する</td><td><code>/close</code>（月締め）</td><td><code>/close month:2026-10</code></td></tr>
+    <tr><td>締めた月の月次報告を取り出す・作り直す</td><td><code>/monthly</code>（月次）</td><td><code>/monthly month:2026-10</code></td></tr>
+    <tr><td>全員分の部費・立替を見る</td><td><code>/dues-status</code>・<code>/advance-status</code></td><td><code>member</code> を省略すると全体が出る</td></tr>
+  </tbody>
+</table>
+</div>
+<ul>
+  <li><code>/dues-set</code> で <code>member</code> を省略すると、在籍中の部員全員に請求します。請求しただけでは出納簿に記録されません。</li>
+  <li><code>/dues-pay</code> で納入を記録すると、科目「部費」の収入が承認待ちで登録されます。記録した人とは別の人が承認します。領収書は要りません。</li>
+  <li><code>/advance-repay</code> は全額返還だけです。返還した日が取引日になり、立替者にメンションで知らせます。</li>
+  <li><code>/reverse</code> は元の記録を消さず、同じ金額で反対向きの記録を足して打ち消します。正しい内容は改めて <code>/entry</code> で入れてください。</li>
+  <li><code>/close</code> は承認待ちが残っていると締められません。月は運用開始月から順に締めます。締めた月の記録は変更できません。</li>
+  <li>年度末の <code>/year-close</code>（年次締め）は、3 月まで締めてから実行します。</li>
+</ul>
+</section>
+
+<section id="faq">
+<h2>よくある質問・困ったとき</h2>
+<p>たいていのエラーは、メッセージに直し方が書いてあります。直してもう一度送信してください。</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>表示されたメッセージ・困りごと</th><th>どうするか</th></tr></thead>
+  <tbody>
+    <tr><td>「先に <code>/register</code> で学籍番号を登録してください」</td><td><code>/register</code> で登録してから、もう一度実行する</td></tr>
+    <tr><td>「科目「○○」は…の科目一覧にありません」</td><td>科目は自分で打たず、候補から選ぶ。収入と支出で選べる科目が違うので、区分も確かめる</td></tr>
+    <tr><td>「領収書…を添付するか、添付できない理由を入力してください」</td><td>領収書を添付する。なくしたときなどは「領収書なしの理由」に理由を書く</td></tr>
+    <tr><td>「領収書を…圧縮できませんでした」</td><td>領収書だけが写るように撮り直す。PDF は 2MB 以下にする</td></tr>
+    <tr><td>「未来の日付…は入力できません」</td><td>お金が動いた日を入れる。支払いの予定は、実際に払ってから記録する</td></tr>
+    <tr><td>「○月は締め済みのため…登録・変更できません」</td><td>会計が締めた月の日付では入力できない。会計に相談する</td></tr>
+    <tr><td>「❌ 処理中にエラーが発生しました」</td><td>時間をおいてもう一度試す。続くときは会計に連絡する</td></tr>
+    <tr><td>入力を間違えた（まだ承認待ち）</td><td>会計に差し戻してもらい、<code>/resubmit</code> で直す</td></tr>
+    <tr><td>入力を間違えた（もう承認済み）</td><td>会計に伝える。会計が <code>/reverse</code> で打ち消し、正しい内容を <code>/entry</code> で入れ直す</td></tr>
+    <tr><td>コマンドが候補に出ない</td><td>部の Discord サーバーの中で <code>/</code> を打つ。DM では使えない。出なければ Discord を再起動する</td></tr>
+  </tbody>
+</table>
+</div>
+<p>ここにないことや、分かりにくいところは会計に聞いてください。</p>
+</section>
+
+<footer>
+  <p>このマニュアルは cashbook-bot のリポジトリの <code>docs/manual/index.html</code> にあります。コマンドを変えたときは、同じコミットでこのファイルも直してください。</p>
+</footer>
+
+</main>
 </body>
 </html>
